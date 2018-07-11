@@ -19,5 +19,6 @@ for(let i = 0; i < bannerCount; i++){
 }
 
 module.exports = {
-  categories
+  categories,
+  banner
 }

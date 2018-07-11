@@ -37,7 +37,8 @@
 
 .banner {
   width: 750rpx;
-  height: 600rpx;
+  height: 350rpx;
+  background: #eee;
 }
 
 .banner image {

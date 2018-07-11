@@ -9,9 +9,13 @@ var WxApiRoot = 'http://111.231.133.175:8082/wx/';
 var StorageApi = 'http://111.231.133.175:8081/os/storage/create';
 
 module.exports = {
-  IndexCategory: WxApiRoot + 'home/category', //首页分类
+  // index
+  IndexCategory: WxApiRoot + 'category/list', // 获取一级分类
+  IndexCategorySecond: WxApiRoot + 'category/list', // 获取二级分类
+  IndexGoodList: WxApiRoot + 'goods/listByCategoryId', // 获取一级分类下的商品
+
+  CatalogList: WxApiRoot + 'goods/listByCategoryId', // 获取一级分类下的商品
   IndexBanner: WxApiRoot + 'home/banner', //首页数据接口
-  CatalogList: WxApiRoot + 'catalog/index', //分类目录全部分类数据接口
   CatalogCurrent: WxApiRoot + 'catalog/current', //分类目录当前分类数据接口
 
   AuthLoginByWeixin: WxApiRoot + 'auth/login_by_weixin', //微信登录

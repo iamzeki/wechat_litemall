@@ -15,15 +15,18 @@
       <!-- banner start -->
       <swiper class="banner" indicator-dots="true" autoplay="true" interval="3000" duration="1000">
         <swiper-item wx:for="{{banner}}" wx:key="id">
-          <!-- <navigator url="{{item.link}}"> -->
           <image src="{{item.url}}" background-size="cover"></image>
-          <!-- </navigator> -->
         </swiper-item>
       </swiper>
       <!-- banner end -->
       <view class="a-section" wx:if="{{goodsList.length > 0}}">
         <view class="b" wx:for="{{goodsList}}" wx:for-index="index" wx:for-item="item" wx:key="id">
-          <navigator url="/pages/goods/goods?id={{item.id}}">
+          <!--标题-->
+          <view wx:if="{{item.isTitle}}">
+            <image class="title" src="{{item.titleImgUrl}}"></image>
+          </view>
+          <!--商品-->
+          <navigator wx:else url="/pages/goods/goods?id={{item.id}}">
             <image class="img" src="{{item.listPicUrl}}" background-size="cover"></image>
             <view class="right">
               <text class="name">{{item.name}}</text>
