@@ -44,3 +44,6 @@
   </view>
   <!--商品列表 end-->
 </view>
+
+<!-- 加入购物车 -->
+<addToCart></addToCart>

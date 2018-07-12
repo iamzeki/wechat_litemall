@@ -1,0 +1,38 @@
+<!--components/addToCart/index.wxml-->
+<view class="add-to-cart" wx:if="{{isShow}}" bindtap="onToggle(false)">
+  <view class="add-to-cart-body">
+    <!-- 顶部 -->
+    <view class="body-top">
+      <image class="body-top-img" src="{{imgUrl}}"></image>
+      <view class="body-top-info">
+        <view class="price">¥ 68</view>
+        <view class="repertory">库存 123456</view>
+      </view>
+    </view>
+    <!-- 中间 -->
+    <view class='body-middle'>
+      <!-- 商品规格 -->
+      <view class="body-middle-item">
+        <view class="item-title">尺码</view>
+        <view class='item-list'>
+          <view class='item selected'>S</view>
+          <view class='item'>M</view>
+          <view class='item'>L</view>
+        </view>
+      </view>
+      <!-- 数量 -->
+      <view class='body-middle-item body-middle-num'>
+        <view class='item-title'>购买数量</view>
+        <view class="selnum">
+          <view class="cut" bindtap="cutNumber">-</view>
+          <input value="{{number}}" class="number" disabled="true" type="number" />
+          <view class="add" bindtap="addNumber">+</view>
+        </view>
+      </view>
+    </view>
+    <!-- 底部 -->
+    <view class='body-bottom'>
+      <view class='body-bottom-btn'>加入购物车</view>
+    </view>
+  </view>
+</view>

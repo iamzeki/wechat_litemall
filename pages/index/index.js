@@ -12,7 +12,7 @@ const isMock = !1;
  *  获取配置
  */
 function getCategories() {
-  return new Promise(function (resolve, reject) {
+  return new Promise(function(resolve, reject) {
     util.request(api.IndexCategory).then(res => {
       if (res.errno === 0) {
         resolve(res);
@@ -49,13 +49,13 @@ Page({
     wx.showLoading({
       title: '加载中...',
     })
-    if (isMock){
+    if (isMock) {
       this.setData({
         categories: mock.categories,
         banner: mock.banner
       })
       wx.hideLoading()
-    }else{
+    } else {
       this.getCategories()
     }
   },
@@ -82,7 +82,7 @@ Page({
         this.initPage(categoryId)
         //this.getBanner()
         this.getCategorySecond();
-      }else{
+      } else {
         this.reqCatch(res.errmsg)
       }
     }).catch((res) => {
@@ -101,10 +101,10 @@ Page({
       this.reqCatch("加载banner异常")
     });
   },
-  next: function (e) {
+  next: function(e) {
     this.getGoodsList();
   },
-  switchCate: function (event) {
+  switchCate: function(event) {
     if (this.data.categoryId == event.currentTarget.dataset.id) {
       return false;
     }
@@ -134,7 +134,7 @@ Page({
     });
   },
   // 获取二级分类
-  getCategorySecond(categoryId){
+  getCategorySecond(categoryId) {
     util.request(api.IndexCategorySecond, {
       parentId: this.data.categoryId,
     }).then(res => {
@@ -144,7 +144,10 @@ Page({
       }
 
       // 一级分类对应的二级分类id和imgUrl
-      let categorySecond = res.data.category.reduce((rut, {id, imgUrl}) => {
+      let categorySecond = res.data.category.reduce((rut, {
+        id,
+        imgUrl
+      }) => {
         rut[id] = imgUrl;
         return rut
       }, {});
@@ -153,9 +156,9 @@ Page({
       })
       // 获取商品
       this.getGoodsList();
-      }).catch(() => {
-        this.reqCatch("加载商品异常")
-      })
+    }).catch(() => {
+      this.reqCatch("加载商品异常")
+    })
   },
   // 获取一级分类下的商品
   getGoodsList() {
@@ -179,7 +182,7 @@ Page({
       page: that.data.page,
       size: that.data.size
     }).then(res => {
-      if (res.errno !== 0){
+      if (res.errno !== 0) {
         this.reqCatch(res.errmsg)
         return;
       }
@@ -197,23 +200,22 @@ Page({
 
       // 数据拼接
       let categorySecond = that.data.categorySecond
-      let tempArray = [...that.data.goodsList, ...res.data.goods].reduce((rut, item) => {
-        let categoryId = item.categoryId;
-        console.log(categorySecond)
-        if (categoryId && categorySecond[categoryId]) {
-          rut.push({
-            isTitle: !0,
-            titleImgUrl: categorySecond[categoryId]
-          })
-          delete categorySecond[categoryId]
-          that.setData({
-            categorySecond: categorySecond
-          })
-        }
-        rut.push(item)
-        return rut
-      }, []);
-      console.log(tempArray)
+      let tempArray = [...that.data.goodsList, ...res.data.goods]
+        .reduce((rut, item) => {
+          let categoryId = item.categoryId;
+          if (categoryId && categorySecond[categoryId]) {
+            rut.push({
+              isTitle: !0,
+              titleImgUrl: categorySecond[categoryId]
+            })
+            delete categorySecond[categoryId]
+            that.setData({
+              categorySecond: categorySecond
+            })
+          }
+          rut.push(item)
+          return rut
+        }, []);
       that.setData({
         goodsList: tempArray,
       });
