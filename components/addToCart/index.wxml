@@ -1,38 +1,52 @@
-<!--components/addToCart/index.wxml-->
-<view class="add-to-cart" wx:if="{{isShow}}" bindtap="onToggle(false)">
-  <view class="add-to-cart-body">
+ <!--components/addToCart/index.wxml-->
+<view class="add-to-cart" wx:if="{{isShow}}" bindtap="_onToggle">
+  <view class="add-to-cart-body" animation="{{animationData}}" wx:if="{{isShow}}" catchtap="_catchTapEvt">
+    <!-- 关闭按钮 -->
+    <view class='add-to-cart-close' catchtap="_onToggle">
+      <icon type="clear" size="20"/>
+    </view>
     <!-- 顶部 -->
     <view class="body-top">
-      <image class="body-top-img" src="{{imgUrl}}"></image>
+      <image class="body-top-img" src="{{curGood.url}}"></image>
       <view class="body-top-info">
-        <view class="price">¥ 68</view>
-        <view class="repertory">库存 123456</view>
+        <view class="price">¥ {{curGood.retailPrice}}</view>
+        <view class="repertory">库存 {{curGood.goodsNumber}}</view>
       </view>
     </view>
     <!-- 中间 -->
     <view class='body-middle'>
       <!-- 商品规格 -->
-      <view class="body-middle-item">
-        <view class="item-title">尺码</view>
+      <view class="body-middle-item" wx:for="{{specificationList}}" wx:for-item="item" wx:key="{{index}}">
+        <view class="item-title">{{item.name}}</view>
         <view class='item-list'>
-          <view class='item selected'>S</view>
-          <view class='item'>M</view>
-          <view class='item'>L</view>
+          <view class='item {{good.selected ? "selected" : ""}} {{good.deleted ? "deleted" : ""}}' 
+                wx:for="{{item.valueList}}" 
+                wx:for-item="good" 
+                wx:key="{{good.id}}" 
+                data-id='{{good.id}}'
+                data-deleted='{{good.deleted}}'
+                data-name='{{good.specification}}'
+                catchtap='_chooseGood'>
+            {{good.value}}
+          </view>
         </view>
       </view>
       <!-- 数量 -->
       <view class='body-middle-item body-middle-num'>
         <view class='item-title'>购买数量</view>
         <view class="selnum">
-          <view class="cut" bindtap="cutNumber">-</view>
+          <view class="cut {{number <= 1 ? 'disabled' : ''}}" catchtap="_cutNumber">-</view>
           <input value="{{number}}" class="number" disabled="true" type="number" />
-          <view class="add" bindtap="addNumber">+</view>
+          <view class='add {{number >= curGood.goodsNumber ? "disabled" : ""}}' catchtap='_addNumber'>+</view>
         </view>
       </view>
     </view>
     <!-- 底部 -->
     <view class='body-bottom'>
-      <view class='body-bottom-btn'>加入购物车</view>
+      <view class='body-bottom-btn' catchtap='addToCard'>加入购物车</view>
     </view>
   </view>
+</view>
+<view class="move-to-cart" wx:if="{{isShowMove}}" animation="{{animationMove}}">
+  <image class="move-to-cart-img" src="{{curGood.url}}"></image>
 </view>

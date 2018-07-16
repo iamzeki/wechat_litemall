@@ -85,11 +85,25 @@ function showErrorToast(msg) {
   })
 }
 
+/**
+ * 接口请求失败，统一的提示
+ */
+function requestError(msg = '系统繁忙'){
+  console.error(msg)
+  wx.hideLoading()
+  wx.showToast({
+    icon: 'none',
+    title: msg,
+    duration: 2000
+  })
+}
+
 module.exports = {
   formatTime,
   request,
   redirect,
-  showErrorToast
+  showErrorToast,
+  requestError
 }
 
 

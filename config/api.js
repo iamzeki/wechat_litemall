@@ -13,6 +13,7 @@ module.exports = {
   IndexCategory: WxApiRoot + 'category/list', // 获取一级分类
   IndexCategorySecond: WxApiRoot + 'category/list', // 获取二级分类
   IndexGoodList: WxApiRoot + 'goods/listByCategoryId', // 获取一级分类下的商品
+  IndexSpecification: WxApiRoot + 'goods/specification',
 
   CatalogList: WxApiRoot + 'goods/listByCategoryId', // 获取一级分类下的商品
   IndexBanner: WxApiRoot + 'home/banner', //首页数据接口

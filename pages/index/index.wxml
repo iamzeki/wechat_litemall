@@ -29,11 +29,13 @@
           <navigator wx:else url="/pages/goods/goods?id={{item.id}}">
             <image class="img" src="{{item.listPicUrl}}" background-size="cover"></image>
             <view class="right">
-              <text class="name">{{item.name}}</text>
-              <text class="desc">{{item.goodsBrief}}</text>
+              <view>
+                <text class="name">{{item.name}}</text>
+                <text class="desc">{{item.goodsBrief}}</text>
+              </view>
               <text class="price">￥{{item.retailPrice}}</text>
               <view class="box">
-                <image bindtap="openCartPage" class="icon" src="/static/images/ic_menu_shoping_pressed.png"></image>
+                <image catchtap="addToCart" data-id="{{item.id}}" class="icon" src="/static/images/ic_menu_shoping_pressed.png"></image>
               </view>
             </view>
           </navigator>
@@ -46,4 +48,4 @@
 </view>
 
 <!-- 加入购物车 -->
-<addToCart></addToCart>
+<addToCart id='dialog'></addToCart>

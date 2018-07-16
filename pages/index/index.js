@@ -8,23 +8,6 @@ const app = getApp()
 // 是否显示mock数据
 const isMock = !1;
 
-/**
- *  获取配置
- */
-function getCategories() {
-  return new Promise(function(resolve, reject) {
-    util.request(api.IndexCategory).then(res => {
-      if (res.errno === 0) {
-        resolve(res);
-      } else {
-        reject(res);
-      }
-    }).catch(res => {
-      reject(res);
-    });
-  });
-}
-
 Page({
   data: {
     scrollHeight: 0,
@@ -33,9 +16,12 @@ Page({
     categories: [], // 一级分类
     categorySecond: {}, // 二级分类
     page: 1,
-    size: 20,
+    size: 3,
     allPage: 0,
     goodsList: []
+  },
+  onReady() {
+    this.dialog = this.selectComponent("#dialog");
   },
   onLoad(options) {
     let that = this;
@@ -59,16 +45,41 @@ Page({
       this.getCategories()
     }
   },
-  // 加载异常
-  reqCatch(err) {
-    console.error(err)
-    wx.hideLoading()
-    wx.showLoading({
-      title: '系统忙...',
+  // 触底
+  onReachBottom() {
+    let page = this.data.page;
+    page++;
+    this.setData({
+      page: page
     })
-    setTimeout(() => {
-      wx.hideLoading()
-    }, 2000)
+    this.getGoodsList();
+  },
+  // 下拉刷新
+  onPullDownRefresh() {
+    wx.stopPullDownRefresh()
+    this.initPage(this.data.categoryId)
+    this.getCategorySecond() //重新获取二级分类和商品
+  },
+  // 初始化页面
+  initPage(categoryId) {
+    this.setData({
+      categoryId: categoryId,
+      page: 1,
+      allPage: 0,
+      goodsList: []
+    });
+  },
+  // banner
+  getBanner() {
+    util.request(api.IndexBanner).then((res) => {
+      if (res.errno === 0) {
+        this.setData({
+          banner: res.data.banner
+        });
+      }
+    }).catch((res) => {
+      util.requestError("加载banner异常")
+    });
   },
   // 加载类别
   getCategories() {
@@ -83,54 +94,10 @@ Page({
         //this.getBanner()
         this.getCategorySecond();
       } else {
-        this.reqCatch(res.errmsg)
+        util.requestError(res.errmsg)
       }
-    }).catch((res) => {
-      this.reqCatch("加载类别异常")
-    });
-  },
-  // banner
-  getBanner() {
-    util.request(api.IndexBanner).then((res) => {
-      if (res.errno === 0) {
-        this.setData({
-          banner: res.data.banner
-        });
-      }
-    }).catch((res) => {
-      this.reqCatch("加载banner异常")
-    });
-  },
-  next: function(e) {
-    this.getGoodsList();
-  },
-  switchCate: function(event) {
-    if (this.data.categoryId == event.currentTarget.dataset.id) {
-      return false;
-    }
-
-    var clientX = event.detail.x;
-    var currentTarget = event.currentTarget;
-    if (clientX < 60) {
-      this.setData({
-        scrollLeft: currentTarget.offsetLeft - 60
-      });
-    } else if (clientX > 330) {
-      this.setData({
-        scrollLeft: currentTarget.offsetLeft
-      });
-    }
-
-    this.initPage(event.currentTarget.dataset.id);
-    this.getGoodsList();
-  },
-  // 初始化页面
-  initPage(categoryId) {
-    this.setData({
-      categoryId: categoryId,
-      page: 1,
-      allPage: 0,
-      goodsList: []
+    }).catch(() => {
+      util.requestError('加载类别失败')
     });
   },
   // 获取二级分类
@@ -139,10 +106,9 @@ Page({
       parentId: this.data.categoryId,
     }).then(res => {
       if (res.errno !== 0) {
-        this.reqCatch(res.errmsg)
+        util.requestError(res.errmsg)
         return;
       }
-
       // 一级分类对应的二级分类id和imgUrl
       let categorySecond = res.data.category.reduce((rut, {
         id,
@@ -157,22 +123,20 @@ Page({
       // 获取商品
       this.getGoodsList();
     }).catch(() => {
-      this.reqCatch("加载商品异常")
+      util.requestError("加载商品异常")
     })
   },
   // 获取一级分类下的商品
   getGoodsList() {
     var that = this;
-
-    if (this.data.allPage > 0 && this.data.page >= this.data.allPage) {
+    if (this.data.allPage > 0 && this.data.page > this.data.allPage) {
       wx.showToast({
-        title: '已经加载完...',
+        title: '已经加载完',
         icon: 'success',
         duration: 2000
       })
       return;
     }
-
     // 加载商品
     wx.showLoading({
       title: '加载中...',
@@ -183,10 +147,9 @@ Page({
       size: that.data.size
     }).then(res => {
       if (res.errno !== 0) {
-        this.reqCatch(res.errmsg)
+        util.requestError(res.errmsg)
         return;
       }
-
       // 分页计算
       var count = res.data.count;
       var allPage = 1
@@ -197,7 +160,6 @@ Page({
       that.setData({
         allPage: allPage
       });
-
       // 数据拼接
       let categorySecond = that.data.categorySecond
       let tempArray = [...that.data.goodsList, ...res.data.goods]
@@ -220,6 +182,40 @@ Page({
         goodsList: tempArray,
       });
       wx.hideLoading()
+    }).catch(res => {
+      util.requestError("获取商品异常")
     })
-  }
+  },
+  // 加入购物车
+  addToCart({ currentTarget }) {
+    let id = currentTarget.dataset.id;
+    if (!id) {
+      wx.showToast({
+        title: '参数缺失',
+        icon: 'none',
+        duration: 2000
+      })
+    }
+    this.dialog.showDialog(id);
+  },
+  // 切换tab
+  switchCate(e) {
+    let id = e.currentTarget.dataset.id;
+    if (this.data.categoryId == id) {
+      return;
+    }
+    var clientX = e.detail.x;
+    var currentTarget = e.currentTarget;
+    if (clientX < 60) {
+      this.setData({
+        scrollLeft: currentTarget.offsetLeft - 60
+      });
+    } else if (clientX > 330) {
+      this.setData({
+        scrollLeft: currentTarget.offsetLeft
+      });
+    }
+    this.initPage(id);
+    this.getGoodsList();
+  },
 })
