@@ -1,0 +1,31 @@
+/* components/inputNum/index.wxss */
+
+.input-num{
+  display: flex;
+  width: 100px;
+}
+
+.input-num .input-num-item{
+  width: 65rpx;
+  height: 65rpx;
+  line-height: 65rpx;
+  border-radius: 100%;
+  font-size: 16px;
+  text-align: center;
+}
+.input-num .cut{
+  line-height: 59rpx;
+  border: 3rpx solid #eb5790;
+  color: #eb5790;
+}
+.input-num .add{
+  background: #eb5790;
+  color: #fff;
+}
+
+.input-num .number{
+  flex: 1;
+  height: 65rpx;
+  text-align: center;
+  font-size: 14px;
+}

@@ -1,0 +1,6 @@
+<!--components/inputNum/index.wxml-->
+<view class="input-num">
+  <view class="input-num-item cut" catchtap="_cutNumber">-</view>
+  <input value="{{number}}" class="number" disabled="true" type="number" />
+  <view class='input-num-item add' catchtap='_addNumber'>+</view>
+</view>

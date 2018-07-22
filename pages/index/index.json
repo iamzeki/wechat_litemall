@@ -1,5 +1,6 @@
 {
   "usingComponents": {
-    "addToCart": "/components/addToCart/index"
+    "addToCart": "/components/addToCart/index",
+    "input-number": "/components/inputNum/index"
   }
 }

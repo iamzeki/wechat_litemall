@@ -18,7 +18,7 @@ Page({
     categories: [], // 一级分类
     categorySecond: {}, // 二级分类
     page: 1,
-    size: 5,
+    size: 3,
     allPage: 0,
     goodsList: [],
     allGoodList: [],
@@ -64,15 +64,54 @@ Page({
     });
   },
   // 触底
-  onReachBottom() {
-    let page = this.data.page++;
-    this.getList();
+  next() {
+    let _this = this;
+    let allGoodList = _this.data.allGoodList;
+    let currentTab = _this.data.currentTab;
+    let goodList = allGoodList[currentTab];
+    let page = goodList.page;
+    let allPage = goodList.allPage
+    page++;
+    console.log(goodList)
+    if (allPage > 0 && page > allPage) {
+      wx.showToast({
+        title: '已经加载完',
+        icon: 'success',
+        duration: 1500
+      })
+      return;
+    }
+    // 加载中
+    wx.showLoading({
+      title: '加载中...',
+    })
+    let cb = (data) => {
+      // 分页计算
+      let count = data.count;
+      let newAllPage = 1;
+      if (count > 0) {
+        newAllPage = this.countPage(count)
+      }
+      // 数据拼接
+      allGoodList[currentTab].list = [...allGoodList[currentTab].list, ...data.goods];
+      // 记录新的当前页码和总页数
+      allGoodList[currentTab].page = page;
+      allGoodList[currentTab].allPage = newAllPage;
+      _this.setData({
+        allGoodList: allGoodList
+      });
+      wx.hideLoading()
+    }
+    this.getGoodList({
+      categoryId: _this.data.categoryId,
+      page: page
+    }, cb)
   },
   // 下拉刷新
   onPullDownRefresh() {
     wx.stopPullDownRefresh()
-    this.initPage(this.data.categoryId)
-    this.getCategorySecond() //重新获取二级分类和商品
+    //this.initPage(this.data.categoryId)
+    //this.getCategorySecond() //重新获取二级分类和商品
   },
   // 初始化页面
   initPage(categoryId) {
@@ -112,6 +151,7 @@ Page({
           return {
             id: id,
             page: 1,
+            allPage: 1,
             list: []
           }
         });
@@ -172,11 +212,11 @@ Page({
     categoryId,
     page
   }, callback) {
-    let that = this;
+    let _this = this;
     util.request(api.IndexGoodList, {
       categoryId: categoryId,
       page: page,
-      size: that.data.size
+      size: _this.data.size
     }).then(res => {
       if (res.errno !== 0) {
         util.requestError(res.errmsg)
@@ -197,7 +237,10 @@ Page({
     let cb = (data) => {
       // 商品列表放到对应的索引下
       let allGoodList = _this.data.allGoodList;
-      allGoodList[idx] && (allGoodList[idx].list = data.goods)
+      if (allGoodList[idx]) {
+        allGoodList[idx].list = data.goods;
+        allGoodList[idx].allPage = _this.countPage(data.count)
+      }
       _this.setData({
         allGoodList: allGoodList
       })
@@ -224,8 +267,11 @@ Page({
   // 当前tab高亮
   activeTab(current) {
     let activeGoodList = this.data.allGoodList[current]
+    // 保存切换的tab 
     this.setData({
-      categoryId: activeGoodList.id
+      categoryId: activeGoodList.id,
+      page: activeGoodList.page,
+      allPage: activeGoodList.allPage
     })
     var query = wx.createSelectorQuery()
     query.select('#tab-' + current).boundingClientRect()
@@ -246,26 +292,23 @@ Page({
           scrollLeft = left - width;
         }
       }
-      console.log(scrollLeft)
-      console.log(viewportWidth, left, right)
       if (scrollLeft){
         this.setData({
           scrollLeft: scrollLeft
         })
       }
     })
-    // query.select('#tab-' + current).boundingClientRect(({ left, right, width }) => {
-    //   console.log(left, right)
-    //   let scrollLeft = this.data.scrollLeft + (left >= 0 ? width : -width)
-    //   // this.setData({
-    //   //   scrollLeft: scrollLeft
-    //   // })
-    // }).exec()
+  },
+  // 计算页码数
+  countPage(count) {
+    let size = this.data.size;
+    return count % size == 0 ? 1 : parseInt(count / size + 1)
   },
   // 加载分页商品
   getList() {
-    var that = this;
-    if (this.data.allPage > 0 && this.data.page > this.data.allPage) {
+    let that = this;
+    let page = this.data.page++;
+    if (this.data.allPage > 0 && page > this.data.allPage) {
       wx.showToast({
         title: '已经加载完',
         icon: 'success',
@@ -273,21 +316,29 @@ Page({
       })
       return;
     }
-    // 加载商品
+    // 加载中
     wx.showLoading({
       title: '加载中...',
     })
     let cb = (data) => {
       // 分页计算
-      var count = data.count;
-      var allPage = 1
-      var size = that.data.size
+      let count = data.count;
+      let allPage = 1
+      let size = that.data.size
       if (count > 0) {
-        allPage = count % size == 0 ? parseInt(count / size) : parseInt(count / size + 1)
+        allPage = this.countPage(count)
       }
+      let allGoodList = this.data.allGoodList;
+      let currentTab = this.data.currentTab;
+      // 数据拼接
+      allGoodList[currentTab].list = [...allGoodList[currentTab].list, ...data.goods];
+      // 记录新的当前页码和总页数
+      allGoodList[currentTab].page = page;
+      allGoodList[currentTab].allPage = allPage;
       that.setData({
         allPage: allPage
       });
+
       // 数据拼接
       // let categorySecond = that.data.categorySecond
       // let tempArray = [...that.data.goodsList, ...res.data.goods]
@@ -305,15 +356,15 @@ Page({
       //     }
       //     rut.push(item)
       //     return rut
-      //   }, []);
-      that.setData({
-        goodsList: tempArray,
-      });
+      // //   }, []);
+      // that.setData({
+      //   goodsList: tempArray,
+      // });
       wx.hideLoading()
     }
     this.getGoodList({
       categoryId: that.data.categoryId,
-      page: that.data.page,
+      page: page,
       size: that.data.size
     }, cb)
   },
@@ -331,7 +382,7 @@ Page({
     }
     this.dialog.showDialog(id);
   },
-  // 切换tab
+  // 点击分类切换tab
   switchCate(e) {
     let id = e.currentTarget.dataset.id;
     let idx = e.currentTarget.dataset.index;
@@ -366,4 +417,19 @@ Page({
     // this.initPage(id);
     // this.getGoodsList();
   },
+  // 只有一种规格回调
+  eventSingle(e) {
+    let id = e.detail;
+    let currentTab = this.data.currentTab;
+    let allGoodList = this.data.allGoodList;
+    allGoodList[currentTab].list.forEach(item => {
+      if(item.id === id){
+        // 修改状态为单一规格
+        item.isSingle = true;
+      }
+    })
+    this.setData({
+      allGoodList: allGoodList
+    })
+  }
 })

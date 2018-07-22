@@ -13,6 +13,7 @@
 .add-to-cart-body {
   display: flex;
   flex-direction: column;
+  justify-content: space-between;
   align-items: flex-end;
   position: absolute;
   left: 0;
@@ -84,49 +85,33 @@
 
 /* 中间 */
 
-.add-to-cart-body .body-middle {
+.body-product-list{
   flex: 1;
   width: 100%;
-  padding: 15rpx 0;
+  padding: 25rpx 0 35rpx;
 }
-
-.body-middle-item {
-  padding: 30rpx 0;
+.body-product-list .list-item{
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 20rpx;
+  margin-bottom: 20rpx;
   border-bottom: 1rpx solid #eee;
 }
-
-.body-middle-item .item-title {
-  font-size: 14px;
-}
-
-.body-middle-item .item-list {
-  padding-top: 15rpx;
-}
-
-.item-list {
-  display: flex;
-  flex-wrap: wrap;
-}
-
-.item-list .item {
-  padding: 0.6em;
+.list-item .item-name{
+  height: 75rpx;
+  line-height: 75rpx;
+  padding: 0 .8em;
   background: #eee;
   border: 2rpx solid #eee;
   border-radius: 5rpx;
   margin-right: 20rpx;
-  line-height: 1;
+  font-size: 14px;
 }
-
-.item-list .item.selected {
+.list-item .item-name.selected {
   background: #fff;
   border-color: #eb5790;
   color: #eb5790;
-}
-
-.item-list .item.deleted {
-  background: #fafafa;
-  border-color: #fafafa;
-  color: gray;
 }
 
 /* 数量 */
@@ -193,4 +178,10 @@
 .move-to-cart-img {
   width: 150rpx;
   height: 150rpx;
+}
+
+.body-title{
+  width: 100%;
+  padding: 35rpx 0;
+  font-size: 16px;
 }

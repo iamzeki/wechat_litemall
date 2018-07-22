@@ -54,6 +54,8 @@
   background: #fff;
   color: #333;
   margin-top: 20rpx;
+  padding-bottom: 20rpx;
+  border-bottom: 1rpx solid #eee;
 }
 
 .a-section .b {
@@ -112,9 +114,6 @@
   position: absolute;
   right: 0;
   bottom: 0;
-  width: 456rpx;
-  display: block;
-  line-height: 50rpx;
 }
 
 .a-section  .icon {
@@ -123,4 +122,9 @@
   height: 50rpx;
   width: 50rpx;
   line-height: 50rpx;
+}
+
+.scoll-h{
+  height: 100%;
+  padding: 0 15rpx;
 }

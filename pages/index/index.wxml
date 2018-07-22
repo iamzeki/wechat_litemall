@@ -32,7 +32,7 @@
   <!--商品列表 end-->
   <swiper class="tab-content" current="{{currentTab}}" duration="300" bindchange="switchTab" style="height:{{winHeight}}rpx; padding-top: 84rpx">
     <swiper-item wx:for="{{allGoodList}}" wx:for-index="i" wx:for-item="good" wx:key="i">
-      <scroll-view scroll-y="true" class="scoll-h">
+      <scroll-view scroll-y="true" class="scoll-h" bindscrolltolower="next">
         <view class="a-section" wx:for="{{good.list}}" wx:for-index="j" wx:for-item="item" wx:key="id">
           <!--标题-->
           <view wx:if="{{item.isTitle}}">
@@ -48,7 +48,10 @@
               </view>
               <text class="price">￥{{item.retailPrice}}</text>
               <view class="box">
-                <image catchtap="addToCart" data-id="{{item.id}}" class="icon" src="/static/images/ic_menu_shoping_pressed.png"></image>
+                <!-- 购物车图标 -->
+                <image catchtap="addToCart" data-id="{{item.id}}" class="icon" src="/static/images/ic_menu_shoping_pressed.png" wx:if="{{!item.isSingle}}"></image>
+                <!-- 商品数量 -->
+                <input-number wx:else></input-number>
               </view>
             </view>
           </navigator>
@@ -59,4 +62,4 @@
 </view>
 
 <!-- 加入购物车 -->
-<addToCart id='dialog'></addToCart>
+<addToCart id='dialog' bind:eventSingle="eventSingle"></addToCart>

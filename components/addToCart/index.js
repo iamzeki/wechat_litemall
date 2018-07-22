@@ -34,6 +34,7 @@ Component({
     curGood: { ...defaultGoodInfo}, // 当前选中的商品
     isShowMove: false,
     animationMove: '',
+    goodsId: null
   },
 
   /**
@@ -67,7 +68,7 @@ Component({
             isShow: false,
             number: 1
           })
-          callBack && callBack()
+          typeof callBack == 'function' && callBack()
         }, duration)
       }
     },
@@ -84,24 +85,20 @@ Component({
           util.requestError(res.errmsg)
           return;
         }
-        // 默认勾选第一个
-        let defaultSelected = 0;
-        let specificationList = res.data.specificationList.map((list, i) => {
-          list.valueList.forEach((item, j) => {
-            if (!item.deleted) {
-              item.selected = i === 0 && j === defaultSelected
-            } else {
-              item.selected = false
-              defaultSelected++
-            }
-          })
-          return list
-        })
-        this.setData({
-          specificationList: specificationList || [],
-          productList: res.data.productList || []
-        })
         wx.hideLoading();
+        let productList = res.data.productList.map(item => {
+          item.selectedNum = 0;
+          return item;
+        })
+        if(productList.length === 1){
+          // 只有一个规格不展示弹出框
+          this.triggerEvent('eventSingle', id);
+          return;
+        }
+        this.setData({
+          productList: productList || [],
+          goodsId: id
+        })
         this._onToggle();
         setTimeout(() => {
           this._chooseGoodInfo();
@@ -162,26 +159,63 @@ Component({
     },
     //加入购物车
     addToCard() {
-      let tips = [];
+      let verify = false;
       // 已选校验
-      this.data.specificationList.forEach(list => {
-        let verify = false
-        list.valueList.forEach(({selected}) => {
-          selected && (verify = true)
-        })
-        verify || tips.push(list.name)
+      this.data.productList.forEach(({ selectedNum }) => {
+        if (selectedNum > 0){
+          verify = true
+        }
       })
       // 提示
-      if (tips.length > 0){
+      if (!verify){
         wx.showToast({
-          title: `请选择 ${tips.join(' ')}`,
+          title: "至少一种商品数量不为0",
           icon: 'none',
           duration: 2000
         })
         return
       }
-      this._onToggle()
+      wx.showLoading({
+        title: '请稍后...',
+        mask: true
+      })
+      let promises = []
+      this.data.productList.forEach(item => {
+        if (item.selectedNum > 0){
+          let params = {
+            goodsId: this.data.goodsId,
+            number: item.selectedNum,
+            productId: item.id
+          }
+          promises.push(this.addToCardApi(params))
+        }
+      });
+      Promise.all(promises).then(res => {
+        wx.hideLoading();
+        let hasErr = false;
+        let tips = null;
+        res.forEach(item => {
+          if (item.errno !== 0){
+            hasErr = true;
+            tips = item.errmsg;
+          }
+        })
+        if (hasErr){
+          wx.showToast({
+            title: tips,
+            icon: 'none',
+            duration: 2000
+          })
+          return
+        }
+        this._onToggle()
         this._moveToCart()
+      }).catch(res => {
+        util.requestError("加入购物车失败")
+      })
+    },
+    addToCardApi(params) {
+      return util.request(api.CartAdd, params, "POST")
     },
     // 数量减
     _cutNumber() {
@@ -247,6 +281,16 @@ Component({
           animationMove: '',
         })
       }, duration1 + duration2 + duration3)
+    },
+    // 
+    _selectedNum(e){
+      let detail = e.detail;
+      let idx = e.target.dataset.index;
+      let productList = this.data.productList;
+      productList[idx].selectedNum = detail;
+      this.setData({
+        productList: productList
+      })
     }
   }
 })
