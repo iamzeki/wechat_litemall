@@ -7,6 +7,8 @@ const mock = require('../../mock/index/index.js')
 const app = getApp()
 // 是否显示mock数据
 const isMock = !1;
+// 缓存所有商品数据
+let tmpGoodsList = {};
 
 Page({
   data: {
@@ -16,9 +18,13 @@ Page({
     categories: [], // 一级分类
     categorySecond: {}, // 二级分类
     page: 1,
-    size: 3,
+    size: 5,
     allPage: 0,
-    goodsList: []
+    goodsList: [],
+    allGoodList: [],
+    winHeight: 0, // 窗口自适应高度
+    currentTab: 0, // 当前tab索引
+    scrollLeft: 0, // tab位置
   },
   onReady() {
     this.dialog = this.selectComponent("#dialog");
@@ -44,15 +50,23 @@ Page({
     } else {
       this.getCategories()
     }
+    //  高度自适应
+    wx.getSystemInfo({
+      success(res) {
+        let clientHeight = res.windowHeight,
+          clientWidth = res.windowWidth,
+          rpxR = 750 / clientWidth;
+        var calc = clientHeight * rpxR;
+        that.setData({
+          winHeight: calc
+        });
+      }
+    });
   },
   // 触底
   onReachBottom() {
-    let page = this.data.page;
-    page++;
-    this.setData({
-      page: page
-    })
-    this.getGoodsList();
+    let page = this.data.page++;
+    this.getList();
   },
   // 下拉刷新
   onPullDownRefresh() {
@@ -85,14 +99,41 @@ Page({
   getCategories() {
     util.request(api.IndexCategory).then(res => {
       if (res.errno === 0) {
-        this.setData({
-          categories: res.data.category
-        });
         let category = res.data.category;
-        let categoryId = category.length > 0 ? category[0].id : 0
+        if (!category || !category.length) {
+          // 长度为0不再执行
+          return
+        }
+        let categoryId = category[0].id; // 默认展示第一个
+        // 初始化所有分类商品数据
+        let allGoodList = category.map(({
+          id
+        }) => {
+          return {
+            id: id,
+            page: 1,
+            list: []
+          }
+        });
         this.initPage(categoryId)
         //this.getBanner()
-        this.getCategorySecond();
+        //this.getCategorySecond();
+        this.setData({
+          categories: res.data.category,
+          allGoodList: allGoodList
+        });
+         // 加载第一页的数据
+        this.catchGoodList(categoryId, 0, () => {
+          wx.hideLoading()
+        });
+        if (category.length > 1){
+          // 缓存第二页的数据
+          this.catchGoodList(category[1].id, 1);
+        }
+        if (category.length > 2) {
+          // 缓存第三页的数据
+          this.catchGoodList(category[2].id, 2);
+        }
       } else {
         util.requestError(res.errmsg)
       }
@@ -126,8 +167,103 @@ Page({
       util.requestError("加载商品异常")
     })
   },
-  // 获取一级分类下的商品
-  getGoodsList() {
+  // 获取分类的商品
+  getGoodList({
+    categoryId,
+    page
+  }, callback) {
+    let that = this;
+    util.request(api.IndexGoodList, {
+      categoryId: categoryId,
+      page: page,
+      size: that.data.size
+    }).then(res => {
+      if (res.errno !== 0) {
+        util.requestError(res.errmsg)
+        return;
+      }
+      callback && callback(res.data || {}) // 执行回调函数
+    }).catch(res => {
+      util.requestError("获取商品异常")
+    })
+  },
+  /**
+   * 缓存商品列表
+   * categoryId 分类id
+   * idx 需缓存的分类对应的索引
+   */
+  catchGoodList(categoryId, idx, callback) {
+    let _this = this;
+    let cb = (data) => {
+      // 商品列表放到对应的索引下
+      let allGoodList = _this.data.allGoodList;
+      allGoodList[idx] && (allGoodList[idx].list = data.goods)
+      _this.setData({
+        allGoodList: allGoodList
+      })
+      callback && callback();
+    };
+    // 获取数据
+    _this.getGoodList({
+      categoryId: categoryId,
+      page: 1
+    }, cb)
+  },
+  // 切换tab
+  switchTab(e) {
+    let current = e.detail.current;
+    let catchTab = current + 2;
+    let allGoodList = this.data.allGoodList;
+    // 需缓存的tab下list需为空
+    if (allGoodList.length > catchTab && allGoodList[catchTab].list.length === 0){
+      // 缓存当前tab索引下的后2页
+      this.catchGoodList(allGoodList[catchTab].id, catchTab)
+    }
+    this.activeTab(current)
+  },
+  // 当前tab高亮
+  activeTab(current) {
+    let activeGoodList = this.data.allGoodList[current]
+    this.setData({
+      categoryId: activeGoodList.id
+    })
+    var query = wx.createSelectorQuery()
+    query.select('#tab-' + current).boundingClientRect()
+    query.selectViewport().fields({ size: true })
+    query.exec(res => {
+      let tabDom = res[0];
+      let viewportWidth = res[1].width;
+      let scrollLeft = null;
+      let left = tabDom.left;
+      let right = tabDom.right;
+      let width = tabDom.width;
+      if(left < 0 || right < 0){
+        // 目标在左边
+        scrollLeft = -left
+      }else{
+        // 目标在右边
+        if (right > viewportWidth) {
+          scrollLeft = left - width;
+        }
+      }
+      console.log(scrollLeft)
+      console.log(viewportWidth, left, right)
+      if (scrollLeft){
+        this.setData({
+          scrollLeft: scrollLeft
+        })
+      }
+    })
+    // query.select('#tab-' + current).boundingClientRect(({ left, right, width }) => {
+    //   console.log(left, right)
+    //   let scrollLeft = this.data.scrollLeft + (left >= 0 ? width : -width)
+    //   // this.setData({
+    //   //   scrollLeft: scrollLeft
+    //   // })
+    // }).exec()
+  },
+  // 加载分页商品
+  getList() {
     var that = this;
     if (this.data.allPage > 0 && this.data.page > this.data.allPage) {
       wx.showToast({
@@ -141,17 +277,9 @@ Page({
     wx.showLoading({
       title: '加载中...',
     })
-    util.request(api.IndexGoodList, {
-      categoryId: that.data.categoryId,
-      page: that.data.page,
-      size: that.data.size
-    }).then(res => {
-      if (res.errno !== 0) {
-        util.requestError(res.errmsg)
-        return;
-      }
+    let cb = (data) => {
       // 分页计算
-      var count = res.data.count;
+      var count = data.count;
       var allPage = 1
       var size = that.data.size
       if (count > 0) {
@@ -161,33 +289,38 @@ Page({
         allPage: allPage
       });
       // 数据拼接
-      let categorySecond = that.data.categorySecond
-      let tempArray = [...that.data.goodsList, ...res.data.goods]
-        .reduce((rut, item) => {
-          let categoryId = item.categoryId;
-          if (categoryId && categorySecond[categoryId]) {
-            rut.push({
-              isTitle: !0,
-              titleImgUrl: categorySecond[categoryId]
-            })
-            delete categorySecond[categoryId]
-            that.setData({
-              categorySecond: categorySecond
-            })
-          }
-          rut.push(item)
-          return rut
-        }, []);
+      // let categorySecond = that.data.categorySecond
+      // let tempArray = [...that.data.goodsList, ...res.data.goods]
+      //   .reduce((rut, item) => {
+      //     let categoryId = item.categoryId;
+      //     if (categoryId && categorySecond[categoryId]) {
+      //       rut.push({
+      //         isTitle: !0,
+      //         titleImgUrl: categorySecond[categoryId]
+      //       })
+      //       delete categorySecond[categoryId]
+      //       that.setData({
+      //         categorySecond: categorySecond
+      //       })
+      //     }
+      //     rut.push(item)
+      //     return rut
+      //   }, []);
       that.setData({
         goodsList: tempArray,
       });
       wx.hideLoading()
-    }).catch(res => {
-      util.requestError("获取商品异常")
-    })
+    }
+    this.getGoodList({
+      categoryId: that.data.categoryId,
+      page: that.data.page,
+      size: that.data.size
+    }, cb)
   },
   // 加入购物车
-  addToCart({ currentTarget }) {
+  addToCart({
+    currentTarget
+  }) {
     let id = currentTarget.dataset.id;
     if (!id) {
       wx.showToast({
@@ -201,21 +334,36 @@ Page({
   // 切换tab
   switchCate(e) {
     let id = e.currentTarget.dataset.id;
+    let idx = e.currentTarget.dataset.index;
     if (this.data.categoryId == id) {
       return;
     }
-    var clientX = e.detail.x;
-    var currentTarget = e.currentTarget;
-    if (clientX < 60) {
-      this.setData({
-        scrollLeft: currentTarget.offsetLeft - 60
-      });
-    } else if (clientX > 330) {
-      this.setData({
-        scrollLeft: currentTarget.offsetLeft
-      });
+    let allGoodList = this.data.allGoodList;
+    if(allGoodList[idx].list.length === 0){
+      // 加载切换的tab页下的数据
+      wx.showLoading({
+        title: '加载中...',
+      })
+      this.catchGoodList(id, idx, () => {
+        wx.hideLoading()
+      })
     }
-    this.initPage(id);
-    this.getGoodsList();
+    this.setData({
+      categoryId: id,
+      currentTab: idx
+    })
+    // var clientX = e.detail.x;
+    // var currentTarget = e.currentTarget;
+    // if (clientX < 60) {
+    //   this.setData({
+    //     scrollLeft: currentTarget.offsetLeft - 60
+    //   });
+    // } else if (clientX > 330) {
+    //   this.setData({
+    //     scrollLeft: currentTarget.offsetLeft
+    //   });
+    // }
+    // this.initPage(id);
+    // this.getGoodsList();
   },
 })

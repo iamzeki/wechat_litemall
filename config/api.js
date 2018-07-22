@@ -4,9 +4,9 @@
 // var StorageApi = 'http://111.231.133.175:8081/os/storage/create';
 
 // 以下是业务服务器API地址
-var WxApiRoot = 'http://111.231.133.175:8082/wx/';
+var WxApiRoot = 'https://www.loverdiu.com/wx/';
 // 以下是图片存储服务器API地址
-var StorageApi = 'http://111.231.133.175:8081/os/storage/create';
+var StorageApi = 'https://www.loverdiu.com/os/storage/create';
 
 module.exports = {
   // index

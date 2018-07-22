@@ -2,28 +2,41 @@
 <view class="containe">
   <!-- 快捷导航 start -->
   <view class="cate-nav">
-    <scroll-view scroll-x="true" class="cate-nav-body" style="width: 750rpx;" scroll-left="{{scrollLeft}}">
-      <view wx:for="{{categories}}" class="item {{ categoryId == item.id ? 'active' : ''}}" wx:key="id" data-id="{{item.id}}" data-index="{{index}}" bindtap="switchCate">
+    <scroll-view scroll-x="true" class="cate-nav-body" id="tab" style="width: 750rpx;" scroll-left="{{scrollLeft}}">
+      <view wx:for="{{categories}}" 
+            class="item {{ categoryId == item.id ? 'active' : ''}}" 
+            id="{{'tab-' + index}}"
+            wx:key="id" 
+            data-id="{{item.id}}" 
+            data-index="{{index}}" 
+            bindtap="switchCate">
         <view class="name">{{item.name}}</view>
       </view>
     </scroll-view>
   </view>
   <!-- 快捷导航 end -->
   <!-- 商品列表 start -->
-  <view style=' margin-top: 84rpx;'>
+  <!-- <view style=' margin-top: 84rpx;'>
     <scroll-view scroll-y="true" bindscrolltolower="next">
-      <!-- banner start -->
       <swiper class="banner" indicator-dots="true" autoplay="true" interval="3000" duration="1000">
         <swiper-item wx:for="{{banner}}" wx:key="id">
           <image src="{{item.url}}" background-size="cover"></image>
         </swiper-item>
       </swiper>
-      <!-- banner end -->
       <view class="a-section" wx:if="{{goodsList.length > 0}}">
-        <view class="b" wx:for="{{goodsList}}" wx:for-index="index" wx:for-item="item" wx:key="id">
+
+      </view>
+    </scroll-view>
+
+  </view> -->
+  <!--商品列表 end-->
+  <swiper class="tab-content" current="{{currentTab}}" duration="300" bindchange="switchTab" style="height:{{winHeight}}rpx; padding-top: 84rpx">
+    <swiper-item wx:for="{{allGoodList}}" wx:for-index="i" wx:for-item="good" wx:key="i">
+      <scroll-view scroll-y="true" class="scoll-h">
+        <view class="a-section" wx:for="{{good.list}}" wx:for-index="j" wx:for-item="item" wx:key="id">
           <!--标题-->
           <view wx:if="{{item.isTitle}}">
-            <image class="title" src="{{item.titleImgUrl}}"></image>
+            <image class="title" src="{{item.titleImgUrl}}" lazy-load="true"></image>
           </view>
           <!--商品-->
           <navigator wx:else url="/pages/goods/goods?id={{item.id}}">
@@ -40,11 +53,9 @@
             </view>
           </navigator>
         </view>
-      </view>
-    </scroll-view>
-
-  </view>
-  <!--商品列表 end-->
+      </scroll-view>
+    </swiper-item>
+  </swiper>
 </view>
 
 <!-- 加入购物车 -->
